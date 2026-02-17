@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  dashboard:
+    build: .
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/app
+    command: streamlit run app.py --server.port=8501 --server.address=0.0.0.0
+
+  automation_engine:
+    build: .
+    volumes:
+      - .:/app
+    command: python scheduler.py
+    restart: always
