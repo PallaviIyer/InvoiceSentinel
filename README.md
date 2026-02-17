@@ -1,4 +1,97 @@
-🛡️ License Sentinel Pro: Enterprise Billing AutomationLicense Sentinel Pro is a dual-engine solution designed to manage software licenses and automate billing reminders. It consists of a Streamlit Dashboard for manual management and a Background Engine for automated "Auto-Pilot" notifications.🏗️ System ArchitectureThe system operates using a "Shared-File" architecture:App Engine (app.py): The user interface where Excel files are uploaded and credentials are saved. It writes to data.xlsx and config.json.Automation Engine (scheduler.py): A background service that reads the shared files and executes notifications based on the defined billing frequency.🚀 Getting Started1. PrerequisitesEnsure you have Python 3.9+ installed. Install the required libraries:Bashpip install streamlit pandas openpyxl requests schedule
-2. Launching the SuiteDouble-click the launch_sentinel.bat file. This will open:Terminal 1: The Dashboard (Access via http://localhost:8501)Terminal 2: The Automation Engine (Scanning for triggers every 10 seconds in Test Mode)⚙️ Configuration & Data SetupThe Settings TabBefore automation will work, go to the Settings tab in the Dashboard and enter:Sender Gmail: Your corporate Gmail address.App Password: A 16-digit Google App Password (not your regular password).Telegram Bot Token: Obtained from @BotFather.Telegram Chat ID: The ID of the group or admin receiving alerts.Required Excel SchemaThe system expects an .xlsx file with the following columns (case-sensitive):Column NameDescriptionEndCustomerNameThe name of the client.StatusMust be ACTIVE for notifications to trigger.Subscription periodThe contract duration (e.g., Annually, Monthly).Billing periodThe Trigger: Set to Daily, Monthly, or Annually.Renewal dateThe date used to calculate monthly/annual triggers.Quantity & AmountUsed to calculate the Total Due ($Qty \times Amt$).Client ContactThe email address where the invoice reminder is sent.🤖 Automation LogicThe Automation Engine follows these rules for ACTIVE licenses:Daily: Sends a notification every time the engine runs.Monthly: Sends a notification once a month on the day matching the Renewal date.Annually: Sends a notification once a year on the exact Renewal date.Note: The engine checks the Expiration date. If the current date is past the expiration, notifications stop automatically, even if the status is still marked "Active."🛠️ Maintenance & ProductionTo move from Testing to Production:Open scheduler.py.Locate the # SCHEDULER INITIALIZATION section.Comment out the 10.seconds line and uncomment the .day.at("09:00") line.Python# Production Mode
-schedule.every().day.at("09:00").do(check_and_send_reminders)
-📁 File Structureapp.py - Streamlit Dashboard UI.scheduler.py - Background Automation Engine.validator.py - Data integrity checker.config.json - Encrypted/Local storage for credentials (generated after first save).data.xlsx - The working database (generated after first upload).launch_sentinel.bat - Windows shortcut for starting both services.Would you like me to add a "Troubleshooting" section to this README to help them if their Gmail or Telegram connection fails?
+# 🛡️ License Sentinel Pro
+
+License Sentinel Pro is an enterprise-grade license management and automated billing notification suite. It combines a user-friendly **Streamlit Dashboard** for data management with a robust **Background Automation Engine** for "Auto-Pilot" reminders.
+
+---
+
+## 🏗️ System Architecture
+
+The suite consists of two primary services that work in synchronization:
+1.  **Management Dashboard (`app.py`):** Used for uploading license data, validating Excel schemas, manual campaign execution, and system configuration.
+2.  **Automation Engine (`scheduler.py`):** A lightweight background service that monitors data and executes notifications (Email & Telegram) based on specific billing frequencies.
+
+
+
+---
+
+## 🚀 Quick Start (Windows)
+
+1.  **Install Dependencies:**
+    Open your terminal and run:
+    ```bash
+    pip install streamlit pandas openpyxl requests schedule
+    ```
+
+2.  **Launch the Suite:**
+    Double-click `launch_sentinel.bat`. This will open two windows:
+    * **Dashboard:** Accessible at `http://localhost:8501`
+    * **Automation Engine:** Running in the background.
+
+---
+
+## ⚙️ Configuration
+
+### 1. Settings Setup
+Before automation triggers, you must navigate to the **Settings** tab in the Dashboard:
+* **Gmail:** Enter your corporate Gmail and 16-digit **App Password**.
+* **Telegram:** Enter your **Bot Token** and **Chat ID**.
+* *Note: Saving these settings creates `config.json`, which is required by the Automation Engine.*
+
+### 2. Data Upload
+Upload your subscription Excel file in the **Dashboard** tab. The system will automatically sync this to `data.xlsx` for the background engine.
+
+---
+
+## 📊 Data Requirements (Excel Schema)
+
+The system requires specific columns to calculate billing and trigger alerts:
+
+| Column Name | Description |
+| :--- | :--- |
+| `EndCustomerName` | Name of the customer. |
+| `Status` | Must be `ACTIVE` for any notification to trigger. |
+| `Expiration date` | The date the service ends (alerts stop after this date). |
+| `Renewal date` | The reference date for Monthly/Annual triggers. |
+| `Subscription period` | The contract type (e.g., Annual). |
+| `Billing period` | **The Trigger:** Set to `Daily`, `Monthly`, or `Annually`. |
+| `Quantity` | Number of seats/licenses. |
+| `Amount` | Unit price per license. |
+| `Client Contact` | Recipient email address. |
+
+
+
+---
+
+## 🤖 Automation Logic
+
+The **Automation Engine** executes calculations and sends alerts based on the `Billing period`:
+
+* **Financial Calculation:** The system automatically calculates:
+    $$Total Due = Quantity \times Amount$$
+* **Trigger Frequency:**
+    * **Daily:** Sends an alert every 24 hours (or every 10s in Test Mode).
+    * **Monthly:** Sends an alert on the same day of the month as the `Renewal date`.
+    * **Annually:** Sends an alert once a year on the specific `Renewal date`.
+
+---
+
+## 🛠️ Maintenance & Deployment
+
+### Switching to Production Mode
+By default, the engine is in **Testing Mode** (scanning every 10 seconds). To move to **Production Mode** (daily scan at 09:00 AM):
+
+1.  Open `scheduler.py`.
+2.  Navigate to the bottom of the file.
+3.  Comment out the 10-second trigger and uncomment the 09:00 AM trigger:
+    ```python
+    # schedule.every(10).seconds.do(check_and_send_reminders) # Comment this
+    schedule.every().day.at("09:00").do(check_and_send_reminders) # Uncomment this
+    ```
+
+### Troubleshooting
+* **No Telegrams:** Check `config.json` to ensure the Bot Token is correct.
+* **Script Errors:** Ensure no hidden spaces exist in the Excel column headers. Use the "Validate" button in the Dashboard to check integrity.
+
+---
+
+**Developed for Enterprise License Management.**
